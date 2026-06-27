@@ -60,19 +60,23 @@ Error generating stack: `+e.message+`
       }
     }
     
-    var isUnique = !localStorage.getItem('solarify_pro_is_unique_visitor');
-    var endpoint = isUnique 
-      ? 'https://api.counterapi.dev/v1/ecoheliopulse_pro/hits/up'
-      : 'https://api.counterapi.dev/v1/ecoheliopulse_pro/hits';
+    var today = new Date().toISOString().split('T')[0];
+    var lastVisitDate = localStorage.getItem('solarify_pro_last_visit_date');
+    var isNewVisitToday = lastVisitDate !== today;
+    
+    var endpoint = isNewVisitToday 
+      ? 'https://countapi.mileshilliard.com/api/v1/hit/ecoheliopulse_pro'
+      : 'https://countapi.mileshilliard.com/api/v1/get/ecoheliopulse_pro';
       
     fetch(endpoint)
       .then(function(res) { return res.json(); })
       .then(function(data) {
-        if (data && typeof data.value === 'number') {
-          showCount(data.value);
-          if (isUnique) {
+        var val = isNewVisitToday ? data.hit : data.value;
+        if (typeof val === 'number') {
+          showCount(val);
+          if (isNewVisitToday) {
             try {
-              localStorage.setItem('solarify_pro_is_unique_visitor', 'true');
+              localStorage.setItem('solarify_pro_last_visit_date', today);
             } catch(e){}
           }
         } else {
@@ -84,7 +88,7 @@ Error generating stack: `+e.message+`
       });
       
     function loadLocal() {
-      var isLocalUnique = !localStorage.getItem('solarify_pro_local_unique_visitor');
+      var isLocalUnique = localStorage.getItem('solarify_pro_local_last_visit_date') !== today;
       var key = 'solarify_pro_local_views';
       var views = 0;
       try {
@@ -94,7 +98,7 @@ Error generating stack: `+e.message+`
         views += 1;
         try {
           localStorage.setItem(key, views);
-          localStorage.setItem('solarify_pro_local_unique_visitor', 'true');
+          localStorage.setItem('solarify_pro_local_last_visit_date', today);
         } catch(e){}
       }
       showCount(views);
